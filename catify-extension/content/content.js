@@ -3,8 +3,7 @@
  *
  * Injected into every webpage matched by manifest.json.
  * Phase 2: Replaces all existing <img> elements with random cat images on page load.
- *
- * Phase 3 will add MutationObserver for dynamically loaded images.
+ * Phase 3: MutationObserver watches for dynamically added <img> elements.
  */
 
 'use strict';
@@ -42,11 +41,16 @@ function preserveDimensions(img) {
   }
 }
 
+/** @type {MutationObserver|null} Single observer instance for the page lifetime. */
+let mutationObserver = null;
+
 /**
  * Replaces a single image src with a random cat URL.
  * @param {HTMLImageElement} img
+ * @param {{ dynamic?: boolean }} [options]
  */
-function replaceImage(img) {
+function replaceImage(img, options = {}) {
+  const dynamic = options.dynamic === true;
   if (!isValidImage(img)) {
     return;
   }
@@ -68,7 +72,10 @@ function replaceImage(img) {
     img.src = catUrl;
     img.dataset.catifyProcessed = 'true';
 
-    console.log('[Catify] Replaced image', img);
+    console.log(
+      dynamic ? '[Catify] Dynamic image replaced' : '[Catify] Replaced image',
+      img
+    );
   } catch (error) {
     console.warn('[Catify] Failed replacing image', img, error);
   }
@@ -88,11 +95,69 @@ function replaceAllImages() {
 }
 
 /**
+ * Processes a single added DOM node — only inspects the node itself, not the full document.
+ * @param {Node} node
+ */
+function processAddedNode(node) {
+  if (node.nodeType !== Node.ELEMENT_NODE) {
+    return;
+  }
+
+  if (node instanceof HTMLImageElement) {
+    console.log('[Catify] New image found', node);
+    replaceImage(node, { dynamic: true });
+    return;
+  }
+
+  const images = node.querySelectorAll('img');
+  for (const img of images) {
+    console.log('[Catify] New image found', img);
+    replaceImage(img, { dynamic: true });
+  }
+}
+
+/**
+ * Handles MutationObserver callbacks — iterates only over newly added nodes.
+ * @param {MutationRecord[]} mutations
+ */
+function handleMutations(mutations) {
+  console.log('[Catify] Mutation detected');
+
+  for (const mutation of mutations) {
+    for (const node of mutation.addedNodes) {
+      try {
+        processAddedNode(node);
+      } catch (error) {
+        console.warn('[Catify] Failed processing added node', node, error);
+      }
+    }
+  }
+}
+
+/**
+ * Starts a single MutationObserver on document.body for dynamically added images.
+ */
+function startMutationObserver() {
+  if (mutationObserver || !document.body) {
+    return;
+  }
+
+  mutationObserver = new MutationObserver(handleMutations);
+  mutationObserver.observe(document.body, {
+    childList: true,
+    subtree: true
+  });
+
+  console.log('[Catify] MutationObserver started');
+}
+
+/**
  * Entry point — waits until the page has fully loaded before replacing images.
  */
 function init() {
   console.log('[Catify] Content script loaded on:', window.location.href);
   replaceAllImages();
+  startMutationObserver();
 }
 
 // manifest.json uses run_at: document_idle; also wait for the load event
