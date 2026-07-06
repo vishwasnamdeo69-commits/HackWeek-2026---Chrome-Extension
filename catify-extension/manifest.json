@@ -1,0 +1,29 @@
+{
+  "manifest_version": 3,
+  "name": "Catify",
+  "version": "1.0.0",
+  "description": "Replace every image on the web with random cats. Because the internet needs more cats.",
+
+  "icons": {
+    "16": "assets/icon16.png",
+    "48": "assets/icon48.png",
+    "128": "assets/icon128.png"
+  },
+
+  "permissions": [],
+
+  "host_permissions": [
+    "<all_urls>"
+  ],
+
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": [
+        "services/catService.js",
+        "content/content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ]
+}

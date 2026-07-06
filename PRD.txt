@@ -1,0 +1,331 @@
+Absolutely. **Cursor is actually one of the best tools for this project.** This is a small codebase (5–10 files), so Cursor can generate most of it while you review and test. I'll act as your product manager and architect, and Cursor will act as the implementation engineer.
+
+We'll build this like a professional software project, even though it's a hackweek challenge.
+
+---
+
+# Product Requirements Document (PRD)
+
+## Project Name
+
+**Catify** – Chrome Extension that Replaces Every Image with Random Cats
+
+---
+
+# 1. Problem Statement
+
+Users often browse websites with numerous images. This Chrome extension transforms the browsing experience by replacing every image on any webpage with a randomly fetched cat image.
+
+The project demonstrates:
+
+* Chrome Extension development
+* Manifest V3 architecture
+* DOM manipulation
+* API integration
+* Browser permissions
+* Dynamic webpage handling
+
+---
+
+# 2. Goal
+
+Develop a Chrome Extension that automatically replaces every image element (`<img>`) on a webpage with a random cat image fetched from a public API.
+
+The extension must:
+
+✅ Use Manifest V3
+
+✅ Run on all websites
+
+✅ Replace all existing images
+
+✅ Handle images loaded dynamically after page load
+
+✅ Be loadable via Chrome Developer Mode
+
+---
+
+# 3. Success Criteria
+
+When the extension is enabled:
+
+* Open Google
+* Open GitHub
+* Open Amazon
+* Open YouTube
+
+Every visible image becomes a cat.
+
+No console errors.
+
+No crashes.
+
+---
+
+# 4. Functional Requirements
+
+## FR-1
+
+Extension installs successfully using
+
+```
+Load Unpacked
+```
+
+---
+
+## FR-2
+
+Runs automatically whenever a webpage loads.
+
+---
+
+## FR-3
+
+Detect every `<img>` element.
+
+---
+
+## FR-4
+
+Fetch a random cat image.
+
+---
+
+## FR-5
+
+Replace image source.
+
+```
+Old
+
+logo.png
+
+↓
+
+New
+
+https://cataas.com/cat
+```
+
+---
+
+## FR-6
+
+New images added later should also become cats.
+
+Example:
+
+Infinite scrolling websites
+
+Instagram
+
+Twitter/X
+
+Amazon
+
+News sites
+
+---
+
+## FR-7
+
+Avoid replacing the same image repeatedly.
+
+---
+
+# Non Functional Requirements
+
+Extension should
+
+* be lightweight
+* execute in under 1 second on normal pages
+* not freeze the browser
+* work offline gracefully (do nothing if API unavailable)
+* have clean project structure
+
+---
+
+# Scope
+
+## In Scope
+
+Manifest V3
+
+Content Script
+
+DOM Manipulation
+
+Cat API
+
+Mutation Observer
+
+Developer Mode Installation
+
+README
+
+Demo Video
+
+---
+
+## Out of Scope
+
+Popup UI
+
+Options Page
+
+Authentication
+
+Backend
+
+Database
+
+Chrome Store publishing
+
+Analytics
+
+---
+
+# User Story
+
+As a Chrome user
+
+I want every webpage image replaced with random cats
+
+so browsing becomes fun.
+
+---
+
+# Technical Architecture
+
+```
+Chrome
+
+↓
+
+manifest.json
+
+↓
+
+Content Script Injected
+
+↓
+
+Find Images
+
+↓
+
+Fetch Cat URL
+
+↓
+
+Replace src
+
+↓
+
+Observe DOM
+
+↓
+
+Replace New Images
+```
+
+---
+
+# Tech Stack
+
+Language
+
+* JavaScript (ES6)
+
+Chrome APIs
+
+* Manifest V3
+* Content Scripts
+
+Browser APIs
+
+* MutationObserver
+* Fetch API
+* DOM API
+
+Cat API
+
+```
+https://cataas.com/cat
+```
+
+or
+
+```
+https://api.thecatapi.com/v1/images/search
+```
+
+---
+
+# Folder Structure
+
+```
+catify-extension/
+
+│
+├── manifest.json
+│
+├── content.js
+│
+├── utils/
+│      catService.js
+│
+├── assets/
+│      icon16.png
+│      icon48.png
+│      icon128.png
+│
+├── README.md
+│
+└── LICENSE
+```
+
+Later we can add
+
+```
+popup/
+background/
+options/
+```
+
+---
+
+# DOM Flow
+
+```
+Page Loads
+
+↓
+
+querySelectorAll("img")
+
+↓
+
+Loop Images
+
+↓
+
+Generate Cat URL
+
+↓
+
+Replace src
+
+↓
+
+Observe Future DOM Changes
+
+↓
+
+Replace New Images
+```
+
+---
+
+
