@@ -1,111 +1,334 @@
-# Catify
+# 🐱 Catify
 
-**Replace every image on the web with random cats.**
+> **Transform every webpage into a cat paradise.**
 
-Catify is a Chrome Extension built with Manifest V3 that transforms any webpage by swapping every `<img>` element with a random cat image fetched from a public API. Built for HackWeek 26.
+Catify is a **Google Chrome Extension** built using **Manifest V3** that automatically replaces every image on a webpage with a random cat image fetched from a public API.
 
-> **Phase 1 (current):** Project foundation — manifest, folder structure, and placeholder scripts. No image replacement yet.
-
----
-
-## Features
-
-| Feature | Status |
-|---------|--------|
-| Manifest V3 configuration | ✅ Ready |
-| Content script injection on all URLs | ✅ Ready |
-| Replace all existing images | 🔜 Planned |
-| Handle dynamically loaded images (MutationObserver) | 🔜 Planned |
-| Random cat images via public API | 🔜 Planned |
-| Graceful offline / API failure handling | 🔜 Planned |
+Designed as part of **HackWeek 2026**, the project demonstrates browser extension development, DOM manipulation, MutationObserver, and compatibility with modern dynamic websites.
 
 ---
 
-## Folder Structure
+## 📸 Demo
+
+### Catify in Action
+
+## 📸 Amazon Demo
+
+![Amazon Demo](docs/screenshots/amazon-demo.png)
+
+## 📸 Extension Installed
+
+![Extension Installed](docs/screenshots/extension-page.png)
+
+## 📸 Wikipedia Demo
+
+![Wikipedia Demo](docs/screenshots/wikipedia-demo.png)
+
+## 📸 Github repo Demo
+
+![Github Demo](docs/screenshots/github-page.png)
+
+
+
+
+---
+
+## ✨ Features
+
+- ✅ Built with **Manifest V3**
+- ✅ Automatically replaces all webpage images with random cats
+- ✅ Works on static websites
+- ✅ Supports dynamically loaded images
+- ✅ MutationObserver for modern SPA compatibility
+- ✅ Handles lazy-loaded content
+- ✅ Lightweight architecture
+- ✅ No backend required
+- ✅ Developer Mode installation
+
+---
+
+## 🏗 Architecture
 
 ```
-catify-extension/
+
+Chrome Browser
 │
-├── manifest.json          # Extension configuration (MV3)
+▼
+Manifest V3
+│
+▼
+Content Script
+│
+├── Detect Existing Images
+│
+├── MutationObserver
+│
+├── Detect Dynamic Images
+│
+▼
+Cat Service
+│
+▼
+Random Cat API
+│
+▼
+Replace Image Source
+
+```
+
+---
+
+## 📂 Project Structure
+
+```
+
+.
+├── assets/
+│ ├── icon16.png
+│ ├── icon48.png
+│ └── icon128.png
 │
 ├── content/
-│   └── content.js         # Content script — runs on every page
+│ └── content.js
 │
 ├── services/
-│   └── catService.js      # Cat API abstraction layer
+│ └── catService.js
 │
-├── assets/
-│   ├── icon16.png         # Toolbar icon
-│   ├── icon48.png         # Extensions management page
-│   └── icon128.png        # Chrome Web Store / install dialog
+├── docs/
+│ └── screenshots/
 │
+├── manifest.json
 ├── README.md
 └── LICENSE
+
+````
+
+---
+
+## ⚙ Installation
+
+### Clone Repository
+
+```bash
+git clone https://github.com/YOUR_USERNAME/catify-chrome-extension.git
 ```
 
-Future phases may add `popup/`, `background/`, and `options/` directories.
+Open Chrome
+
+Go to
+
+```
+chrome://extensions
+```
+
+Enable
+
+```
+Developer Mode
+```
+
+Click
+
+```
+Load unpacked
+```
+
+Select the project folder.
+
+Done!
 
 ---
 
-## Installation
+## 🚀 How It Works
 
-### Prerequisites
+### 1. Chrome Loads Extension
 
-- [Google Chrome](https://www.google.com/chrome/) (version 88+ recommended for full MV3 support)
+Chrome reads
 
-### Load via Developer Mode
+```
+manifest.json
+```
 
-1. Clone or download this repository.
-2. Open Chrome and navigate to `chrome://extensions`.
-3. Enable **Developer mode** (toggle in the top-right corner).
-4. Click **Load unpacked**.
-5. Select the `catify-extension` folder (the directory containing `manifest.json`).
-6. Confirm Catify appears in your extensions list with no errors.
-
-### Verify Phase 1
-
-1. With Catify enabled, open any website (e.g. `https://google.com`).
-2. Open DevTools → **Console** tab.
-3. You should see: `[Catify] Content script loaded on: <url>`
-4. Images on the page should **not** change yet — that is expected for Phase 1.
+and injects the content script into every webpage.
 
 ---
 
-## Technologies Used
+### 2. Existing Images
 
-- **JavaScript (ES6+)** — Content scripts and service layer
-- **Chrome Extension Manifest V3** — Modern extension platform
-- **Content Scripts** — Page-level script injection
-- **Public Cat APIs** *(Phase 2)* — [Cataas](https://cataas.com/) / [The Cat API](https://thecatapi.com/)
+The content script scans
 
----
+```javascript
+document.querySelectorAll("img")
+```
 
-## Roadmap
-
-### Phase 1 — Foundation *(current)*
-
-- [x] Project structure
-- [x] Manifest V3 configuration
-- [x] Content script registration for all URLs
-- [x] Placeholder icons and service module
-- [x] README and LICENSE
-
-### Phase 2 — Core Replacement
-
-- [ ] Detect all `<img>` elements on page load
-- [ ] Fetch random cat URLs via `catService.js`
-- [ ] Replace image `src` attributes
-- [ ] Add `MutationObserver` for dynamically loaded images
-- [ ] Deduplicate replacements to avoid re-processing the same image
-
-### Phase 3 — Polish
-
-- [ ] Offline / API error handling
-- [ ] Performance optimization for large pages
-- [ ] Demo video and final testing across major sites
+Every detected image is replaced with a random cat image.
 
 ---
 
-## License
+### 3. Dynamic Images
 
-MIT — see [LICENSE](LICENSE).
+Modern websites continuously add new images.
+
+Catify uses
+
+```
+MutationObserver
+```
+
+to monitor DOM changes and automatically replace newly inserted images.
+
+---
+
+### 4. Lazy Loading Support
+
+Some websites update images after they are inserted.
+
+Catify also observes changes to
+
+* `src`
+* `srcset`
+* `sizes`
+
+allowing compatibility with lazy-loaded and dynamically updated images.
+
+---
+
+## 🛠 Tech Stack
+
+| Technology            | Purpose                       |
+| --------------------- | ----------------------------- |
+| JavaScript (ES6)      | Core extension logic          |
+| Manifest V3           | Chrome Extension architecture |
+| DOM API               | Image detection               |
+| MutationObserver      | Dynamic content detection     |
+| Cataas API            | Random cat images             |
+| Chrome Developer Mode | Extension testing             |
+
+---
+
+## 📸 Screenshots
+
+### Extension Installed
+
+![Extension](docs/screenshots/extension-page.png)
+
+---
+
+### Wikipedia
+
+![Wikipedia](docs/screenshots/wikipedia-demo.png)
+
+---
+
+### Amazon
+
+![Amazon](docs/screenshots/amazon-demo.png)
+
+---
+
+### YouTube
+
+![YouTube](docs/screenshots/youtube-demo.png)
+
+---
+
+## 💡 Technical Challenges
+
+During development several modern browser behaviors had to be addressed.
+
+### Dynamic Websites
+
+Many websites continuously insert new images while scrolling.
+
+Solved using
+
+* MutationObserver
+* Child node detection
+
+---
+
+### Lazy Loading
+
+Some websites update image sources after insertion.
+
+Solved by observing
+
+* src
+* srcset
+* sizes
+
+attribute changes.
+
+---
+
+### Preventing Infinite Loops
+
+Replacing an image also changes its attributes.
+
+To avoid recursive processing, Catify uses internal processing flags and processed markers.
+
+---
+
+### Responsive Images
+
+Modern websites often use `<picture>` elements.
+
+The extension clears responsive image attributes where required before replacing image sources.
+
+---
+
+## 🔮 Future Improvements
+
+* Popup UI
+* Enable / Disable toggle
+* Website whitelist
+* Dog mode 🐶
+* Custom image categories
+* Chrome Web Store publishing
+
+---
+
+## 🎥 Demo Video
+
+> Demo video will be available here after submission.
+
+```
+<Add YouTube or Google Drive Link>
+```
+
+---
+
+## 👨‍💻 Author
+
+**Vishwas Namdeo**
+
+B.Tech Computer Science (CSIT)
+
+HackWeek 2026 Submission
+
+GitHub:
+
+```
+https://github.com/vishwasnamdeo69-commits
+```
+
+---
+
+## 📜 License
+
+This project is licensed under the MIT License.
+
+---
+
+## ⭐ Acknowledgements
+
+* Google Chrome Extension Documentation
+* Manifest V3
+* Cataas API
+* HackWeek 2026
+
+---
+
+> **Because every webpage deserves more cats. 🐱**
+
+``
