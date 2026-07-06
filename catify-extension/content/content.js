@@ -4,24 +4,46 @@
  * Injected into every webpage matched by manifest.json.
  * Phase 2: Replaces all existing <img> elements with random cat images on page load.
  * Phase 3: MutationObserver watches for dynamically added <img> elements.
+ * Phase 4: Attribute observation, <picture> support, and debounce for modern SPAs.
  */
 
 'use strict';
 
+/** Debounce window for dynamic replacements (ms). */
+const DEBOUNCE_MS = 75;
+
+/** @type {Map<HTMLImageElement, number>} Pending debounced replacements. */
+const pendingReplacements = new Map();
+
+/**
+ * Returns true if a URL points to the Catify cat API.
+ * @param {string} url
+ * @returns {boolean}
+ */
+function isCatifyUrl(url) {
+  return typeof url === 'string' && url.includes('cataas.com/cat');
+}
+
 /**
  * Returns true if the element is a replaceable image.
  * @param {Element} img
+ * @param {{ allowReprocess?: boolean }} [options]
  * @returns {boolean}
  */
-function isValidImage(img) {
+function isValidImage(img, options = {}) {
+  const allowReprocess = options.allowReprocess === true;
+
   if (!(img instanceof HTMLImageElement)) {
     return false;
   }
   if (!img.isConnected) {
     return false;
   }
-  if (img.dataset.catifyProcessed === 'true') {
+  if (img.dataset.catifyProcessing === 'true') {
     return false;
+  }
+  if (img.dataset.catifyProcessed === 'true') {
+    return allowReprocess;
   }
   return true;
 }
@@ -45,17 +67,57 @@ function preserveDimensions(img) {
 let mutationObserver = null;
 
 /**
+ * Clears responsive attributes from sibling <source> elements inside a <picture>.
+ * Prevents <picture> from overriding the replaced <img> src.
+ * @param {HTMLImageElement} img
+ */
+function clearPictureSources(img) {
+  const picture = img.closest('picture');
+  if (!picture) {
+    return;
+  }
+
+  for (const source of picture.querySelectorAll('source')) {
+    source.removeAttribute('srcset');
+    source.removeAttribute('sizes');
+  }
+}
+
+/**
+ * Schedules a debounced replacement for dynamically changing images.
+ * @param {HTMLImageElement} img
+ * @param {{ dynamic?: boolean, allowReprocess?: boolean }} [options]
+ */
+function scheduleReplaceImage(img, options = {}) {
+  const existingTimeout = pendingReplacements.get(img);
+  if (existingTimeout !== undefined) {
+    clearTimeout(existingTimeout);
+  }
+
+  const timeoutId = window.setTimeout(() => {
+    pendingReplacements.delete(img);
+    replaceImage(img, { dynamic: true, ...options });
+  }, DEBOUNCE_MS);
+
+  pendingReplacements.set(img, timeoutId);
+}
+
+/**
  * Replaces a single image src with a random cat URL.
  * @param {HTMLImageElement} img
- * @param {{ dynamic?: boolean }} [options]
+ * @param {{ dynamic?: boolean, allowReprocess?: boolean }} [options]
  */
 function replaceImage(img, options = {}) {
   const dynamic = options.dynamic === true;
-  if (!isValidImage(img)) {
+  const allowReprocess = options.allowReprocess === true;
+
+  if (!isValidImage(img, { allowReprocess })) {
     return;
   }
 
   try {
+    img.dataset.catifyProcessing = 'true';
+
     const catUrl = CatService.getRandomCat();
 
     if (!catUrl) {
@@ -64,6 +126,7 @@ function replaceImage(img, options = {}) {
     }
 
     preserveDimensions(img);
+    clearPictureSources(img);
 
     // Prevent responsive srcset from overriding the new src
     img.removeAttribute('srcset');
@@ -78,6 +141,8 @@ function replaceImage(img, options = {}) {
     );
   } catch (error) {
     console.warn('[Catify] Failed replacing image', img, error);
+  } finally {
+    delete img.dataset.catifyProcessing;
   }
 }
 
@@ -105,30 +170,62 @@ function processAddedNode(node) {
 
   if (node instanceof HTMLImageElement) {
     console.log('[Catify] New image found', node);
-    replaceImage(node, { dynamic: true });
+    scheduleReplaceImage(node);
     return;
   }
 
   const images = node.querySelectorAll('img');
   for (const img of images) {
     console.log('[Catify] New image found', img);
-    replaceImage(img, { dynamic: true });
+    scheduleReplaceImage(img);
   }
 }
 
 /**
- * Handles MutationObserver callbacks — iterates only over newly added nodes.
+ * Handles attribute changes on existing <img> elements (e.g. lazy-loaded src updates).
+ * @param {MutationRecord} mutation
+ */
+function processAttributeChange(mutation) {
+  const target = mutation.target;
+
+  if (!(target instanceof HTMLImageElement)) {
+    return;
+  }
+
+  if (target.dataset.catifyProcessing === 'true') {
+    return;
+  }
+
+  // Ignore src mutations caused by our own replacement
+  if (mutation.attributeName === 'src' && isCatifyUrl(target.getAttribute('src'))) {
+    return;
+  }
+
+  console.log('[Catify] Image attribute changed', mutation.attributeName, target);
+  scheduleReplaceImage(target, { allowReprocess: true });
+}
+
+/**
+ * Handles MutationObserver callbacks — child additions and attribute changes only.
  * @param {MutationRecord[]} mutations
  */
 function handleMutations(mutations) {
   console.log('[Catify] Mutation detected');
 
   for (const mutation of mutations) {
-    for (const node of mutation.addedNodes) {
+    if (mutation.type === 'childList') {
+      for (const node of mutation.addedNodes) {
+        try {
+          processAddedNode(node);
+        } catch (error) {
+          console.warn('[Catify] Failed processing added node', node, error);
+        }
+      }
+    } else if (mutation.type === 'attributes') {
       try {
-        processAddedNode(node);
+        processAttributeChange(mutation);
       } catch (error) {
-        console.warn('[Catify] Failed processing added node', node, error);
+        console.warn('[Catify] Failed processing attribute change', mutation.target, error);
       }
     }
   }
@@ -145,10 +242,12 @@ function startMutationObserver() {
   mutationObserver = new MutationObserver(handleMutations);
   mutationObserver.observe(document.body, {
     childList: true,
-    subtree: true
+    subtree: true,
+    attributes: true,
+    attributeFilter: ['src', 'srcset', 'sizes']
   });
 
-  console.log('[Catify] MutationObserver started');
+  console.log('[Catify] MutationObserver started (childList + attributes)');
 }
 
 /**
