@@ -1,33 +1,32 @@
 /**
  * Catify — Cat Service
  *
- * Abstraction layer for fetching random cat image URLs from public APIs.
- * Loaded before content.js so the service is available when replacement logic is added.
- *
- * Phase 1: Foundation only — no API calls or fetch() yet.
- *
- * Phase 2 will integrate with:
- *   - https://cataas.com/cat
- *   - https://api.thecatapi.com/v1/images/search
+ * Generates random cat image URLs from the Cataas public API.
+ * Loaded before content.js so CatService is available when replacement runs.
  */
 
 'use strict';
 
+/** Base endpoint — each request with a unique query param returns a different cat. */
+const CATAAS_ENDPOINT = 'https://cataas.com/cat';
+
 /**
- * Placeholder namespace for future cat image operations.
  * @namespace CatService
  */
 const CatService = {
   /**
-   * Returns a random cat image URL.
-   * @returns {string} Placeholder — real implementation in Phase 2.
+   * Returns a unique random cat image URL.
+   * Appends a random query parameter to bypass browser/CDN caching.
+   *
+   * @returns {string} A cataas.com URL pointing to a random cat image.
    */
-  getRandomCatUrl() {
-    return '';
+  getRandomCat() {
+    const cacheBuster = `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
+    return `${CATAAS_ENDPOINT}?random=${cacheBuster}`;
   }
 };
 
-// Expose globally for content script access (no module bundler in Phase 1)
+// Expose globally for content script access (no module bundler)
 if (typeof window !== 'undefined') {
   window.CatService = CatService;
 }
